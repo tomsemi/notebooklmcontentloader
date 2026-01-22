@@ -5,7 +5,7 @@ import sys
 # Add the current directory to path so we can import 'core'
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from core.utils import is_url, is_downloadable, download_file
+from core.utils import is_url, is_downloadable, download_file, download_url_content
 from core.notebook_client import ensure_notebook, add_source
 from core.providers import (
     is_annas_url, handle_annas_archive,
@@ -55,7 +55,14 @@ def main():
             # A-2: Default URL mode
             else:
                 print(f"🔗 Adding Link: {inp}")
-                add_source(inp, notebook=target_notebook)
+                success, _ = add_source(inp, notebook=target_notebook)
+                if not success:
+                    print("⚠️ URL Direct Add Failed. Attempting to crawl content...")
+                    local_content = download_url_content(inp)
+                    if local_content:
+                        add_source(local_content, notebook=target_notebook)
+                    else:
+                        print("❌ Crawling also failed.")
         
         # Case B: Local Path
         else:

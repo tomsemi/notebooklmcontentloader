@@ -10,9 +10,11 @@ description: A unified loader to feed URLs, files, and downloaded content into N
 ## 🎯 核心能力
 
 1.  **URL 直传**：直接将网页链接添加到 NotebookLM（由 NotebookLM 原生抓取）。
-2.  **文件下载**：自动识别 PDF/EPUB/DOC 链接，下载到本地后上传。
-3.  **本地文件**：支持单个文件上传。
-4.  **目录扫描**：递归扫描文件夹，批量上传所有文档。
+2.  **自动降级抓取 (Auto-Crawl Fallback)**：如果 NotebookLM 无法抓取网页（如 403/地区限制），自动切换为本地爬虫抓取并上传，确保万无一失。
+3.  **文件下载**：自动识别 PDF/EPUB/DOC 链接，下载到本地后上传。
+4.  **本地文件**：支持单个文件上传。
+5.  **目录扫描**：递归扫描文件夹，批量上传所有文档。
+6.  **智能等待 (Smart Wait)**：在 AI 提问前自动等待源文件索引完成，杜绝 "RPC Error"。
 
 ## 🌟 高级集成 (Specialized Integrations)
 
@@ -116,23 +118,24 @@ python3 scripts/loader.py "/Users/ge/Desktop/paper.pdf"
 python3 scripts/loader.py "/Users/ge/Documents/Research_Project/"
 ```
 
-### 4. 混合指令 (Mixed)
+### 5. 🔎 强力研究员 (Robust Researcher)
+*支持全自动流程：上传（含反爬处理） -> 等待索引 -> AI 问答*
 
-用户："新建一个笔记本，把这个网页和那个文件放进去"
+用户："帮我研究这个很难访问的网页，总结一下"
 
 ```bash
-python3 scripts/loader.py \
-    "https://example.com/article" \
-    "/Users/ge/Desktop/note.txt" \
-    --notebook "Project Analysis"
+# 自动处理 URL 失败降级，并等待索引完成后再提问
+python3 scripts/researcher.py \
+    -n "Deep Research" \
+    -s "https://cursor.com/cn/docs/configuration/worktrees" \
+    -q "总结这篇文章的核心内容"
 ```
 
 ## 🛠️ 参数说明
-
 *   `inputs`: (必填) 一个或多个 URL 或 文件路径。
 *   `--notebook / -n`: (选填) 指定目标笔记本名称。
-*   `--download / -d`: (选填) 强制开启下载模式（主要用于 URL 结尾不包含文件后缀的情况）。
+*   `--download / -d`: (选填) 强制开启下载模式。
 
 ## 依赖
-*   Python 3+
-*   `notebooklm` CLI (已安装并登录)
+*   Python 3+, `requests`, `beautifulsoup4`
+*   `notebooklm-py` (已安装并登录)
