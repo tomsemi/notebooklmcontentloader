@@ -1,5 +1,6 @@
 import subprocess
 import json
+import re
 
 def run_notebooklm_cmd(args):
     """
@@ -21,16 +22,52 @@ def run_notebooklm_cmd(args):
         return False, "Command not found"
 
 def ensure_notebook(notebook_name):
-    """Creates a notebook if it doesn't exist, or switches to it."""
-    # Note: notebooklm CLI 'create' switches context to it.
+    """
+    Creates a notebook and returns (success, notebook_id).
+    """
     print(f"Target Notebook: {notebook_name}")
-    # We use 'create' which likely gets or creates. 
-    # Actually checking `notebooklm create --help` might be useful, but based on loader.py it was just running create.
-    # The CLI behavior: create switches to the new notebook.
-    return run_notebooklm_cmd(["create", notebook_name])
+    # Always create for now since list is unreliable.
+    # Users effectively get a new research session per run if using this.
+    success, output = run_notebooklm_cmd(["create", notebook_name])
+    
+    if success:
+        # Expected output: "Created notebook: UUID - Name"
+        match = re.search(r"Created notebook:\s*([0-9a-fA-F-]+)", output)
+        if match:
+            return True, match.group(1)
+        else:
+            print(f"⚠️ Warning: Could not parse Notebook ID from: {output}")
+            # Fallback: maybe it didn't print standard output? Return name as last resort?
+            # No, returning name fails RPCs. Return None.
+            return True, None # Proceed with caution or fail?
+    return False, None
 
-def add_source(source_path):
-    return run_notebooklm_cmd(["source", "add", source_path])
+def add_source(source_path, notebook=None):
+    """
+    Adds a source to the specified (or current) notebook.
+    Returns (success, source_id).
+    """
+    args = ["source", "add", source_path, "--json"]
+    if notebook:
+        args.extend(["-n", notebook])
+    
+    success, output = run_notebooklm_cmd(args)
+    if success:
+        try:
+            data = json.loads(output)
+            source_id = data.get("source", {}).get("id")
+            return True, source_id
+        except json.JSONDecodeError:
+            print(f"⚠️ Warning: Could not parse JSON output: {output}")
+            return True, None
+    return False, None
+
+def wait_for_source(source_id, notebook=None, timeout=120):
+    """Waits for a source to leverage the 'source wait' command."""
+    args = ["source", "wait", source_id, "--timeout", str(timeout)]
+    if notebook:
+        args.extend(["-n", notebook])
+    return run_notebooklm_cmd(args)
 
 def ask_question(question, notebook=None):
     args = ["ask", question]

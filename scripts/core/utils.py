@@ -2,6 +2,8 @@ import urllib.request
 import re
 import shutil
 import os
+import requests
+from bs4 import BeautifulSoup
 
 def is_url(s):
     return s.startswith("http://") or s.startswith("https://")
@@ -22,7 +24,6 @@ def download_file(url):
     filename = re.sub(r'[^\w\-.]', '_', filename)
     if not filename.endswith((".pdf", ".epub", ".docx", ".txt", ".md")):
          # Try to guess or just append nothing, risking it. 
-         # Given this is a simple downloader, we accept what we get or maybe checking Content-Disposition header would be better
          # For now, keep it simple as per original script
          pass
 
@@ -35,4 +36,48 @@ def download_file(url):
         return os.path.abspath(filename)
     except Exception as e:
         print(f"Download failed: {e}")
+        return None
+
+def download_url_content(url):
+    """
+    Fetches the content of a URL and saves it as a local Markdown file.
+    Used as a fallback when NotebookLM fails to process a URL directly.
+    """
+    print(f"🕷️  Crawling content from: {url}")
+    try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+        response = requests.get(url, headers=headers, timeout=15)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # Remove script and style elements
+        for script in soup(["script", "style", "nav", "footer"]):
+            script.decompose()
+
+        # Get text
+        title = soup.title.string if soup.title else "Extracted Content"
+        text = soup.get_text(separator='\n\n')
+        
+        # Clean up whitespace
+        lines = (line.strip() for line in text.splitlines())
+        chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+        text = '\n'.join(chunk for chunk in chunks if chunk)
+        
+        # Create a filename
+        safe_title = re.sub(r'[^\w\-]', '_', title)[:50]
+        filename = f"{safe_title}.txt" # Use .txt for simplicity, it's safer for NotebookLM than .md sometimes
+        
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write(f"Source URL: {url}\n\n")
+            f.write(f"# {title}\n\n")
+            f.write(text)
+            
+        print(f"✅ Content saved to local file: {filename}")
+        return os.path.abspath(filename)
+        
+    except Exception as e:
+        print(f"❌ Failed to crawl URL: {e}")
         return None

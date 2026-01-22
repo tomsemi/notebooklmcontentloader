@@ -21,8 +21,15 @@ def main():
     args = parser.parse_args()
     
     # 1. Check/Create Notebook
+    target_notebook = None
     if args.notebook:
-        ensure_notebook(args.notebook)
+        success, nb_id = ensure_notebook(args.notebook)
+        if success and nb_id:
+            target_notebook = nb_id
+            print(f"✅ Context set to Notebook ID: {target_notebook}")
+        else:
+            print("❌ Failed to create/set notebook.")
+            return
     
     # 2. Process Inputs
     for inp in args.inputs:
@@ -43,12 +50,12 @@ def main():
             if args.download or is_downloadable(inp):
                 local_path = download_file(inp)
                 if local_path:
-                    add_source(local_path)
+                    add_source(local_path, notebook=target_notebook)
                     # Optional: clean up? os.remove(local_path)
             # A-2: Default URL mode
             else:
                 print(f"🔗 Adding Link: {inp}")
-                add_source(inp)
+                add_source(inp, notebook=target_notebook)
         
         # Case B: Local Path
         else:
@@ -62,11 +69,11 @@ def main():
                             if not file.startswith('.'): # Skip hidden
                                 fpath = os.path.join(root, file)
                                 print(f"  -> {file}")
-                                add_source(fpath)
+                                add_source(fpath, notebook=args.notebook)
                 # Single File
                 else:
                     print(f"📄 Adding File: {inp}")
-                    add_source(inp)
+                    add_source(inp, notebook=args.notebook)
             else:
                 print(f"⚠️ Not found: {inp}")
 
