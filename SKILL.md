@@ -14,14 +14,28 @@ description: A unified loader to feed URLs, files, and downloaded content into N
 3.  **本地文件**：支持单个文件上传。
 4.  **目录扫描**：递归扫描文件夹，批量上传所有文档。
 
-## 📋 触发条件 (Triggers)
+## 🌟 高级集成 (Specialized Integrations)
 
-当用户有以下意图时使用此 Skill：
+Loader 内置了对特定知识库的深度支持，能够自动处理复杂的下载流程。
 
-*   "把这个链接传上去"
-*   "读一下这几篇论文"
-*   "把这个文件夹里的文档都分析一下"
-*   "下载这本书并上传"
+### 1. Anna's Archive (`annas-archive.org` / `.li`)
+*   **全自动下载**：支持直接粘贴详情页 URL。
+*   **二级页面支持**：**NEW!** 直接支持粘贴 `/slow_download/` 等倒计时下载页，脚本会自动等待倒计时结束并点击下载。
+*   **智能排队**：自动处理等待时间。
+
+### 2. Z-Library (`z-lib.do` / singlelogin)
+*   **自动登录**：读取本地配置进行自动登录。
+*   **双模式下载**：即支持新版界面的“三点菜单”下载，也支持旧版的“转换”按钮。
+*   **格式优选**：优先下载 PDF，其次下载 EPUB。
+
+## 🪄 格式处理黑科技
+
+*   **EPUB 零依赖转换**：内置纯 Python 实现的 EPUB 解析器。无需安装任何额外库，脚本会自动解压 EPUB，清洗 HTML 标签，提取纯文本上传。解决所有兼容性问题。
+*   **智能分割**：如果是超大文件（超过 NotebookLM Token 限制），脚本会自动将其分割成多个部分上传。
+*   **原生支持**：
+    *   PDF (推荐)
+    *   TXT / Markdown
+    *   DOCX
 
 ## 🔧 使用案例 (Examples)
 
@@ -34,19 +48,25 @@ description: A unified loader to feed URLs, files, and downloaded content into N
 python3 content_loader/scripts/loader.py "https://example.com/blog-post"
 ```
 
-### 2. 导入可下载文件 (Files via URL)
+### 2. 从 Anna's Archive 搬运
 
-用户："把这篇 Arxiv 论文传上去"
+用户："帮我读这本书"
 
 ```bash
-# 脚本会自动识别 .pdf 后缀并先下载
-python3 content_loader/scripts/loader.py "https://arxiv.org/pdf/2301.1234.pdf"
+# 粘贴详情页
+python3 content_loader/scripts/loader.py "https://annas-archive.li/md5/..."
 
-# 如果后缀不明显，可强制开启下载模式
-python3 content_loader/scripts/loader.py "https://example.com/download?id=123" --download
+# 或者直接粘贴下载倒计时页 (无需等待倒计时结束，脚本会替你等)
+python3 content_loader/scripts/loader.py "https://annas-archive.li/slow_download/..."
 ```
 
-### 3. 导入本地资源 (Local)
+### 3. 从 Z-Library 搬运
+
+```bash
+python3 content_loader/scripts/loader.py "https://z-library.se/book/..."
+```
+
+### 4. 导入本地资源 (Local)
 
 用户："把桌面上这堆资料传上去"
 
