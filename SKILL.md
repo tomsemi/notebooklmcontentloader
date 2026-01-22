@@ -14,7 +14,7 @@ description: A unified loader to feed URLs, files, and downloaded content into N
 3.  **文件下载**：自动识别 PDF/EPUB/DOC 链接，下载到本地后上传。
 4.  **本地文件**：支持单个文件上传。
 5.  **目录扫描**：递归扫描文件夹，批量上传所有文档。
-6.  **智能等待 (Smart Wait)**：在 AI 提问前自动等待源文件索引完成，杜绝 "RPC Error"。
+6.  **上传确认 (Upload Confirmation)**：确保所有资源被 NotebookLM 成功接收并索引（Ready 状态）。
 
 ## 🌟 高级集成 (Specialized Integrations)
 
@@ -30,13 +30,7 @@ Loader 内置了对特定知识库的深度支持，能够自动处理复杂的�
 *   **双模式下载**：即支持新版界面的“三点菜单”下载，也支持旧版的“转换”按钮。
 *   **格式优选**：优先下载 PDF，其次下载 EPUB。
 
-### 3. Researcher Pilot (`scripts/researcher.py`)
-*   **功能**：上传并自动提问/分析。
-*   **注意**：目前因 Google API 变动，`ask` (提问) 功能暂时不稳定 (Pending Fix).
-*   **用法**：
-    ```bash
-    python3 scripts/researcher.py --notebook "Topic" --source "url" --query "Summarize this"
-    ```
+
 
 ## 🪄 格式处理黑科技
 
@@ -78,17 +72,7 @@ This section defines the precise steps the Agent MUST follow when executing this
 python3 scripts/loader.py "https://example.com/blog-post"
 ```
 
-### 2. 智能分析 (Researcher)
-```bash
-# 上传并生成简报 (Output to console & file)
-python3 scripts/researcher.py \
-    --notebook "News Analysis" \
-    --source "https://it.sohu.com/..." \
-    --query "核心观点是什么？" \
-    --output "report.md"
-```
-
-### 2. 从 Anna's Archive 搬运
+### 3. 从 Anna's Archive 搬运
 
 用户："帮我读这本书"
 
@@ -100,13 +84,13 @@ python3 scripts/loader.py "https://annas-archive.li/md5/..."
 python3 scripts/loader.py "https://annas-archive.li/slow_download/..."
 ```
 
-### 3. 从 Z-Library 搬运
+### 4. 从 Z-Library 搬运
 
 ```bash
 python3 scripts/loader.py "https://z-library.se/book/..."
 ```
 
-### 4. 导入本地资源 (Local)
+### 5. 导入本地资源 (Local)
 
 用户："把桌面上这堆资料传上去"
 
@@ -118,17 +102,15 @@ python3 scripts/loader.py "/Users/ge/Desktop/paper.pdf"
 python3 scripts/loader.py "/Users/ge/Documents/Research_Project/"
 ```
 
-### 5. 🔎 强力研究员 (Robust Researcher)
-*支持全自动流程：上传（含反爬处理） -> 等待索引 -> AI 问答*
+### 6. 混合指令 (Mixed)
 
-用户："帮我研究这个很难访问的网页，总结一下"
+用户："新建一个笔记本，把这个网页和那个文件放进去"
 
 ```bash
-# 自动处理 URL 失败降级，并等待索引完成后再提问
-python3 scripts/researcher.py \
-    -n "Deep Research" \
-    -s "https://cursor.com/cn/docs/configuration/worktrees" \
-    -q "总结这篇文章的核心内容"
+python3 scripts/loader.py \
+    "https://example.com/article" \
+    "/Users/ge/Desktop/note.txt" \
+    --notebook "Project Analysis"
 ```
 
 ## 🛠️ 参数说明

@@ -74,3 +74,32 @@ def ask_question(question, notebook=None):
     if notebook:
         args.extend(["-n", notebook])
     return run_notebooklm_cmd(args)
+
+def generate_and_download_podcast(notebook_id, output_path="podcast.mp3"):
+    """
+    Generates an audio overview (podcast) and downloads it.
+    """
+    print("🎙️  Generating Audio Overview (Podcast)...")
+    
+    # 1. Generate Audio (with wait)
+    # The --wait flag in generate audio ensures we don't proceed until it's ready
+    gen_args = ["generate", "audio", "--wait", "-n", notebook_id]
+    success, output = run_notebooklm_cmd(gen_args)
+    
+    if not success:
+        print("❌ Failed to generate audio.")
+        return False
+
+    print("✅ Audio generation complete. Downloading...")
+
+    # 2. Download Audio
+    # We use 'audio' command from 'download' group
+    dl_args = ["download", "audio", output_path, "-n", notebook_id, "--latest", "--force"]
+    success, output = run_notebooklm_cmd(dl_args)
+    
+    if success:
+        print(f"🎉 Podcast downloaded successfully: {output_path}")
+        return True
+    else:
+        print("❌ Failed to download audio.")
+        return False
