@@ -28,6 +28,14 @@ Loader 内置了对特定知识库的深度支持，能够自动处理复杂的�
 *   **双模式下载**：即支持新版界面的“三点菜单”下载，也支持旧版的“转换”按钮。
 *   **格式优选**：优先下载 PDF，其次下载 EPUB。
 
+### 3. Researcher Pilot (`scripts/researcher.py`)
+*   **功能**：上传并自动提问/分析。
+*   **注意**：目前因 Google API 变动，`ask` (提问) 功能暂时不稳定 (Pending Fix).
+*   **用法**：
+    ```bash
+    python3 scripts/researcher.py --notebook "Topic" --source "url" --query "Summarize this"
+    ```
+
 ## 🪄 格式处理黑科技
 
 *   **EPUB 零依赖转换**：内置纯 Python 实现的 EPUB 解析器。无需安装任何额外库，脚本会自动解压 EPUB，清洗 HTML 标签，提取纯文本上传。解决所有兼容性问题。
@@ -37,15 +45,45 @@ Loader 内置了对特定知识库的深度支持，能够自动处理复杂的�
     *   TXT / Markdown
     *   DOCX
 
+## ⚙️ Execution Workflow (Agent Instructions)
+
+This section defines the precise steps the Agent MUST follow when executing this skill.
+
+1.  **Pre-flight Check (Dependency Verification)**:
+    *   Check if `notebooklm` CLI is available: Run `notebooklm --version`.
+    *   **IF** the command fails (command not found):
+        *   Automatically run: `pip install notebooklm-py` (or `pip install git+https://github.com/teng-lin/notebooklm-py.git`).
+        *   **CRITICAL**: Check if user is logged in by running `notebooklm auth check` (or similar). If not logged in, STOP and ask the user to run `notebooklm auth login`.
+    *   **IF** `notebooklm` is available, proceed to step 2.
+
+2.  **Input Analysis**:
+    *   Identify if the input is a URL, Z-Library link, Anna's Archive link, or Local File.
+    *   Construct the appropriate command based on the "Examples" section below.
+
+3.  **Execution**:
+    *   Run the `loader.py` script.
+    *   Monitor the output. If the script fails due to an auth error, guide the user to re-login.
+
+
 ## 🔧 使用案例 (Examples)
 
-### 1. 导入网页链接 (URLs)
+### 1. 导入网页 (Loader)
 
 用户："分析这篇博客"
 
 ```bash
 # 直接传链接
-python3 content_loader/scripts/loader.py "https://example.com/blog-post"
+python3 scripts/loader.py "https://example.com/blog-post"
+```
+
+### 2. 智能分析 (Researcher)
+```bash
+# 上传并生成简报 (Output to console & file)
+python3 scripts/researcher.py \
+    --notebook "News Analysis" \
+    --source "https://it.sohu.com/..." \
+    --query "核心观点是什么？" \
+    --output "report.md"
 ```
 
 ### 2. 从 Anna's Archive 搬运
@@ -54,16 +92,16 @@ python3 content_loader/scripts/loader.py "https://example.com/blog-post"
 
 ```bash
 # 粘贴详情页
-python3 content_loader/scripts/loader.py "https://annas-archive.li/md5/..."
+python3 scripts/loader.py "https://annas-archive.li/md5/..."
 
 # 或者直接粘贴下载倒计时页 (无需等待倒计时结束，脚本会替你等)
-python3 content_loader/scripts/loader.py "https://annas-archive.li/slow_download/..."
+python3 scripts/loader.py "https://annas-archive.li/slow_download/..."
 ```
 
 ### 3. 从 Z-Library 搬运
 
 ```bash
-python3 content_loader/scripts/loader.py "https://z-library.se/book/..."
+python3 scripts/loader.py "https://z-library.se/book/..."
 ```
 
 ### 4. 导入本地资源 (Local)
@@ -72,10 +110,10 @@ python3 content_loader/scripts/loader.py "https://z-library.se/book/..."
 
 ```bash
 # 单个文件
-python3 content_loader/scripts/loader.py "/Users/ge/Desktop/paper.pdf"
+python3 scripts/loader.py "/Users/ge/Desktop/paper.pdf"
 
 # 整个文件夹 (批量上传)
-python3 content_loader/scripts/loader.py "/Users/ge/Documents/Research_Project/"
+python3 scripts/loader.py "/Users/ge/Documents/Research_Project/"
 ```
 
 ### 4. 混合指令 (Mixed)
@@ -83,7 +121,7 @@ python3 content_loader/scripts/loader.py "/Users/ge/Documents/Research_Project/"
 用户："新建一个笔记本，把这个网页和那个文件放进去"
 
 ```bash
-python3 content_loader/scripts/loader.py \
+python3 scripts/loader.py \
     "https://example.com/article" \
     "/Users/ge/Desktop/note.txt" \
     --notebook "Project Analysis"
